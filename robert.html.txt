@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Procurações</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 600px;
+        }
+        
+        .form-section {
+            padding: 40px;
+            background: #f8f9fa;
+        }
+        
+        .preview-section {
+            padding: 40px;
+            background: white;
+            border-left: 1px solid #e9ecef;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .required {
+            color: #e74c3c;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .preview-content {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            font-family: 'Times New Roman', serif;
+            line-height: 1.6;
+            font-size: 14px;
+            min-height: 500px;
+        }
+        
+        .preview-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: #2c3e50;
+        }
+        
+        .highlight {
+            background-color: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        
+        .error {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .date-inputs {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .preview-section {
+                border-left: none;
+                border-top: 1px solid #e9ecef;
+            }
+            
+            .buttons {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Gerador de Procurações</h1>
+            <p>Sistema automatizado para criação de procurações judiciais</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="form-section">
+                <form id="procuracaoForm">
+                    <div class="form-group">
+                        <label for="nome">Nome Completo <span class="required">*</span></label>
+                        <input type="text" id="nome" name="nome" required>
+                        <div class="error" id="nomeError"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cpf">CPF <span class="required">*</span></label>
+                        <input type="text" id="cpf" name="cpf" required placeholder="000.000.000-00">
+                        <div class="error" id="cpfError"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="rg">RG <span class="required">*</span></label>
+                        <input type="text" id="rg" name="rg" required>
+                        <div class="error" id="rgError"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">E-mail <span class="required">*</span></label>
+                        <input type="email" id="email" name="email" required>
+                        <div class="error" id="emailError"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="endereco">Endereço Completo <span class="required">*</span></label>
+                        <textarea id="endereco" name="endereco" required placeholder="Rua, número, bairro, cidade"></textarea>
+                        <div class="error" id="enderecoError"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cep">CEP <span class="required">*</span></label>
+                        <input type="text" id="cep" name="cep" required placeholder="00000-000">
+                        <div class="error" id="cepError"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="estadoCivil">Estado Civil <span class="required">*</span></label>
+                        <select id="estadoCivil" name="estadoCivil" required>
+                            <option value="">Selecione o estado civil</option>
+                            <option value="solteiro(a)">Solteiro(a)</option>
+                            <option value="casado(a)">Casado(a)</option>
+                            <option value="divorciado(a)">Divorciado(a)</option>
+                            <option value="viúvo(a)">Viúvo(a)</option>
+                            <option value="união estável">União Estável</option>
+                        </select>
+                        <div class="error" id="estadoCivilError"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="empresa">Empresa</label>
+                        <select id="empresa" name="empresa">
+                            <option value="">Selecione uma empresa</option>
+                            <option value="LATAM">LATAM</option>
+                            <option value="AZUL">AZUL</option>
+                            <option value="AZUL CONECTA">AZUL CONECTA</option>
+                            <option value="GOL">GOL</option>
+                            <option value="VOEPASS">VOEPASS</option>
+                            <option value="SIDERAL">SIDERAL</option>
+                            <option value="BRISTOW">BRISTOW</option>
+                            <option value="OMNI">OMNI</option>
+                            <option value="OUTROS">OUTROS</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Data da Procuração</label>
+                        <div class="date-inputs">
+                            <input type="number" id="dia" placeholder="Dia" min="1" max="31">
+                            <select id="mes">
+                                <option value="">Mês</option>
+                                <option value="janeiro">Janeiro</option>
+                                <option value="fevereiro">Fevereiro</option>
+                                <option value="março">Março</option>
+                                <option value="abril">Abril</option>
+                                <option value="maio">Maio</option>
+                                <option value="junho">Junho</option>
+                                <option value="julho">Julho</option>
+                                <option value="agosto">Agosto</option>
+                                <option value="setembro">Setembro</option>
+                                <option value="outubro">Outubro</option>
+                                <option value="novembro">Novembro</option>
+                                <option value="dezembro">Dezembro</option>
+                            </select>
+                            <input type="number" id="ano" placeholder="Ano" min="2020" max="2030" value="2025">
+                        </div>
+                    </div>
+                </form>
+                
+                <div class="buttons">
+                    <button type="button" class="btn btn-primary" onclick="gerarProcuracao()">Gerar</button>
+                    <button type="button" class="btn btn-secondary" onclick="visualizarProcuracao()">Visualizar</button>
+                    <button type="button" class="btn btn-success" onclick="salvarPDF()">Salvar PDF</button>
+                </div>
+            </div>
+            
+            <div class="preview-section">
+                <h3 style="color: #2c3e50; margin-bottom: 20px;">Visualização da Procuração</h3>
+                <div class="preview-content" id="previewContent">
+                    <div class="preview-title">PROCURAÇÃO</div>
+                    <p style="text-align: center; color: #7f8c8d; font-style: italic;">
+                        Preencha os campos ao lado para gerar a procuração
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Função para formatar CPF
+        function formatarCPF(cpf) {
+            return cpf.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        }
+        
+        // Função para formatar CEP
+        function formatarCEP(cep) {
+            return cep.replace(/\D/g, '').replace(/(\d{5})(\d{3})/, '$1-$2');
+        }
+        
+        // Aplicar máscara de CPF
+        document.getElementById('cpf').addEventListener('input', function(e) {
+            e.target.value = formatarCPF(e.target.value);
+        });
+        
+        // Aplicar máscara de CEP
+        document.getElementById('cep').addEventListener('input', function(e) {
+            e.target.value = formatarCEP(e.target.value);
+        });
+        
+        // Validar campos obrigatórios
+        function validarCampos() {
+            const campos = ['nome', 'cpf', 'rg', 'email', 'endereco', 'cep', 'estadoCivil'];
+            let todosValidos = true;
+            
+            campos.forEach(campo => {
+                const elemento = document.getElementById(campo);
+                const erro = document.getElementById(campo + 'Error');
+                
+                if (!elemento.value.trim()) {
+                    erro.textContent = 'Este campo é obrigatório';
+                    elemento.style.borderColor = '#e74c3c';
+                    todosValidos = false;
+                } else {
+                    erro.textContent = '';
+                    elemento.style.borderColor = '#e9ecef';
+                }
+            });
+            
+            // Validar formato do CPF
+            const cpf = document.getElementById('cpf').value;
+            if (cpf && cpf.length !== 14) {
+                document.getElementById('cpfError').textContent = 'CPF deve ter 11 dígitos';
+                document.getElementById('cpf').style.borderColor = '#e74c3c';
+                todosValidos = false;
+            }
+            
+            // Validar formato do CEP
+            const cep = document.getElementById('cep').value;
+            if (cep && cep.length !== 9) {
+                document.getElementById('cepError').textContent = 'CEP deve ter 8 dígitos';
+                document.getElementById('cep').style.borderColor = '#e74c3c';
+                todosValidos = false;
+            }
+            
+            // Validar email
+            const email = document.getElementById('email').value;
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (email && !emailPattern.test(email)) {
+                document.getElementById('emailError').textContent = 'E-mail inválido';
+                document.getElementById('email').style.borderColor = '#e74c3c';
+                todosValidos = false;
+            }
+            
+            return todosValidos;
+        }
+        
+        function gerarProcuracao() {
+            if (validarCampos()) {
+                visualizarProcuracao();
+                alert('Procuração gerada com sucesso!');
+            } else {
+                alert('Por favor, preencha todos os campos obrigatórios corretamente.');
+            }
+        }
+        
+        function visualizarProcuracao() {
+            const nome = document.getElementById('nome').value;
+            const cpf = document.getElementById('cpf').value;
+            const rg = document.getElementById('rg').value;
+            const email = document.getElementById('email').value;
+            const endereco = document.getElementById('endereco').value;
+            const cep = document.getElementById('cep').value;
+            const estadoCivil = document.getElementById('estadoCivil').value;
+            const empresa = document.getElementById('empresa').value;
+            const dia = document.getElementById('dia').value;
+            const mes = document.getElementById('mes').value;
+            const ano = document.getElementById('ano').value;
+            
+            let dataFinal = '';
+            if (dia && mes && ano) {
+                dataFinal = `${dia} de ${mes} de ${ano}`;
+            } else {
+                dataFinal = '______ de ______________________ de 2025';
+            }
+            
+            let empresaTexto = empresa ? empresa : 'XXXXXXXX';
+            let enderecoCompleto = endereco;
+            if (cep) {
+                enderecoCompleto += `, CEP: ${cep}`;
+            }
+            
+            const procuracao = `
+                <div class="preview-title">PROCURAÇÃO</div>
+                
+                <p style="text-align: justify; margin-bottom: 20px;">
+                    <strong>${nome || 'XXXXXXXX'}</strong>, brasileiro(a), <strong>${estadoCivil || 'solteiro(a)'}</strong>, aeronauta, inscrita no CPF/MF sob o nº. <strong>${cpf || 'XXXXXX'}</strong>, portadora da cédula de identidade RG nº <strong>${rg || 'XXXXXXX'}</strong>, residente e domiciliada à <strong>${enderecoCompleto || 'Rua XXXXXXX, CEP: XXXXX'}</strong>, endereço de e-mail <strong>${email || 'XXXXXXXXX'}</strong>, neste ato assistida por <strong>SINDICATO NACIONAL DOS AERONAUTAS</strong>, portadora do registro sindical nº 00750008214-3, com sede na Rua Renascença, nº 801/112 - Conjuntos 41, 42, 51, 52, 61, 62, 71 e 72, Vila Congonhas, São Paulo – SP, CEP 04612-010, CNPJ/MF n° 33.452.400/0001-97, nomeia e constitui como seus bastantes procuradores os advogados.
+                </p>
+                
+                <p style="margin-bottom: 20px;">
+                    <strong>OUTORGADA:</strong> MARCIA CRISTINA GEMAQUE FURTADO, brasileira, divorciada, advogada, OAB/SP nº 145.072, CPF nº 221.919.332-20 com endereço profissional na Rua Renascença, nº 801/112 - Conjuntos 41, 42, 51, 52, 61, 62, 71 e 72, Vila Congonhas, São Paulo – SP, CEP 04612-010, e eletrônico juridico@aeronautas.org.br.
+                </p>
+                
+                <p style="text-align: justify; margin-bottom: 30px;">
+                    <strong>PODERES:</strong> Amplos poderes para o foro em geral, com a cláusula ad judicia, em qualquer Juízo, Instância ou Tribunal, podendo propor contra quem de direito as ações competentes e defendê-los nas contrárias, seguindo umas e outras, até final decisão, utilizando os recursos legais, acompanhando-os, praticando todos os atos do processo; conferindo-lhes, ainda, poderes especiais para confessar, desistir, transigir, desistir, renunciar ao direito sobre o qual se finda a ação, firmar compromissos ou acordos, receber e dar quitação, assinar declaração de hipossuficiência econômica, agindo em conjunto ou separadamente, podendo substabelecer a outrem, com ou sem reservas de iguais poderes, dando tudo por bom, firme e valioso, para o fim de ajuizar ação e envidar quaisquer medidas judiciais em face de <strong>${empresaTexto}</strong>.
+                </p>
+                
+                <p style="text-align: center; margin-top: 40px;">
+                    São Paulo, <strong>${dataFinal}</strong>.
+                </p>
+                
+                <div style="margin-top: 80px; text-align: center;">
+                    <div style="border-top: 1px solid #000; width: 300px; margin: 0 auto; padding-top: 10px;">
+                        ${nome || 'NOME COMPLETO'}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('previewContent').innerHTML = procuracao;
+        }
+        
+        function salvarPDF() {
+            if (!validarCampos()) {
+                alert('Por favor, preencha todos os campos obrigatórios antes de salvar o PDF.');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const nome = document.getElementById('nome').value;
+            const cpf = document.getElementById('cpf').value;
+            const rg = document.getElementById('rg').value;
+            const email = document.getElementById('email').value;
+            const endereco = document.getElementById('endereco').value;
+            const cep = document.getElementById('cep').value;
+            const estadoCivil = document.getElementById('estadoCivil').value;
+            const empresa = document.getElementById('empresa').value || 'XXXXXXXX';
+            const dia = document.getElementById('dia').value;
+            const mes = document.getElementById('mes').value;
+            const ano = document.getElementById('ano').value;
+            
+            let dataFinal = '';
+            if (dia && mes && ano) {
+                dataFinal = `${dia} de ${mes} de ${ano}`;
+            } else {
+                dataFinal = '______ de ______________________ de 2025';
+            }
+            
+            let enderecoCompleto = endereco;
+            if (cep) {
+                enderecoCompleto += `, CEP: ${cep}`;
+            }
+            
+            // Configurar fonte
+            doc.setFont('times', 'normal');
+            doc.setFontSize(12);
+            
+            // Título
+            doc.setFontSize(16);
+            doc.setFont('times', 'bold');
+            doc.text('PROCURAÇÃO', 105, 30, { align: 'center' });
+            
+            // Corpo do texto
+            doc.setFontSize(12);
+            doc.setFont('times', 'normal');
+            
+            const texto1 = `${nome}, brasileiro(a), ${estadoCivil}, aeronauta, inscrita no CPF/MF sob o nº. ${cpf}, portadora da cédula de identidade RG nº ${rg}, residente e domiciliada à ${enderecoCompleto}, endereço de e-mail ${email}, neste ato assistida por SINDICATO NACIONAL DOS AERONAUTAS, portadora do registro sindical nº 00750008214-3, com sede na Rua Renascença, nº 801/112 - Conjuntos 41, 42, 51, 52, 61, 62, 71 e 72, Vila Congonhas, São Paulo – SP, CEP 04612-010, CNPJ/MF n° 33.452.400/0001-97, nomeia e constitui como seus bastantes procuradores os advogados.`;
+            
+            const outorgada = `OUTORGADA: MARCIA CRISTINA GEMAQUE FURTADO, brasileira, divorciada, advogada, OAB/SP nº 145.072, CPF nº 221.919.332-20 com endereço profissional na Rua Renascença, nº 801/112 - Conjuntos 41, 42, 51, 52, 61, 62, 71 e 72, Vila Congonhas, São Paulo – SP, CEP 04612-010, e eletrônico juridico@aeronautas.org.br.`;
+            
+            const poderes = `PODERES: Amplos poderes para o foro em geral, com a cláusula ad judicia, em qualquer Juízo, Instância ou Tribunal, podendo propor contra quem de direito as ações competentes e defendê-los nas contrárias, seguindo umas e outras, até final decisão, utilizando os recursos legais, acompanhando-os, praticando todos os atos do processo; conferindo-lhes, ainda, poderes especiais para confessar, desistir, transigir, desistir, renunciar ao direito sobre o qual se finda a ação, firmar compromissos ou acordos, receber e dar quitação, assinar declaração de hipossuficiência econômica, agindo em conjunto ou separadamente, podendo substabelecer a outrem, com ou sem reservas de iguais poderes, dando tudo por bom, firme e valioso, para o fim de ajuizar ação e envidar quaisquer medidas judiciais em face de ${empresa}.`;
+            
+            // Adicionar texto com quebra de linha automática
+            const splitText1 = doc.splitTextToSize(texto1, 170);
+            doc.text(splitText1, 20, 50);
+            
+            const splitOutorgada = doc.splitTextToSize(outorgada, 170);
+            doc.text(splitOutorgada, 20, 50 + (splitText1.length * 7) + 15);
+            
+            const splitPoderes = doc.splitTextToSize(poderes, 170);
+            doc.text(splitPoderes, 20, 50 + (splitText1.length * 7) + (splitOutorgada.length * 7) + 30);
+            
+            // Data e assinatura
+            doc.text(`São Paulo, ${dataFinal}.`, 105, 220, { align: 'center' });
+            
+            // Linha para assinatura
+            doc.line(55, 250, 155, 250);
+            doc.text(nome, 105, 260, { align: 'center' });
+            
+            // Salvar o PDF
+            const nomeArquivo = `Procuracao_${nome.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`;
+            doc.save(nomeArquivo);
+        }
+        
+        // Atualizar preview em tempo real
+        document.querySelectorAll('input, select, textarea').forEach(element => {
+            element.addEventListener('input', function() {
+                if (document.getElementById('previewContent').innerHTML.includes('brasileiro(a)')) {
+                    visualizarProcuracao();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

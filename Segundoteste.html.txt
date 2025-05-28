@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Documentos Jurídicos</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea { 
+            width: 100%; 
+            padding: 8px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box;
+        }
+        button { 
+            background: #007bff; 
+            color: white; 
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+        }
+        button:hover { background: #0056b3; }
+        #documentoGerado { 
+            white-space: pre-wrap; 
+            margin-top: 20px; 
+            padding: 20px; 
+            border: 1px solid #ddd; 
+            background: #f9f9f9; 
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .required::after { content: "*"; color: red; margin-left: 3px; }
+        #outraEmpresa { margin-top: 5px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gerador de Documentos Jurídicos</h1>
+        
+        <form onsubmit="event.preventDefault(); gerarDocumento()">
+            <div class="form-group">
+                <label class="required">Tipo de Documento:</label>
+                <select id="tipoDocumento" required>
+                    <option value="">Selecione...</option>
+                    <option value="procuração">Procuração</option>
+                    <option value="contrato">Contrato AJI</option>
+                    <option value="declaracao">Declaração de Hipossuficiência</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="required">Empresa:</label>
+                <select id="empresa" required onchange="toggleOutraEmpresa()">
+                    <option value="">Selecione...</option>
+                    <option value="Latam">Latam</option>
+                    <option value="Azul">Azul</option>
+                    <option value="Gol">Gol</option>
+                    <option value="Voepass">Voepass</option>
+                    <option value="Bristow">Bristow</option>
+                    <option value="Sideral">Sideral</option>
+                    <option value="Omni">Omni</option>
+                    <option value="Outras">Outras</option>
+                </select>
+                <input type="text" id="outraEmpresa" placeholder="Especifique a empresa">
+            </div>
+
+            <div class="form-group">
+                <label class="required">Nome Completo:</label>
+                <input type="text" id="nomeCompleto" required>
+            </div>
+
+            <div class="form-group">
+                <label class="required">CPF:</label>
+                <input type="text" id="cpf" required pattern="\d{3}\.\d{3}\.\d{3}-\d{2}" placeholder="000.000.000-00">
+            </div>
+
+            <div class="form-group">
+                <label class="required">RG:</label>
+                <input type="text" id="rg" required>
+            </div>
+
+            <div class="form-group">
+                <label class="required">Endereço Completo:</label>
+                <input type="text" id="endereco" required>
+            </div>
+
+            <div class="form-group">
+                <label class="required">E-mail:</label>
+                <input type="email" id="email" required>
+            </div>
+
+            <button type="submit">Gerar Documento</button>
+        </form>
+
+        <pre id="documentoGerado"></pre>
+    </div>
+
+    <script>
+        function toggleOutraEmpresa() {
+            const empresa = document.getElementById('empresa').value;
+            const outraEmpresa = document.getElementById('outraEmpresa');
+            outraEmpresa.style.display = empresa === 'Outras' ? 'block' : 'none';
+            if(empresa !== 'Outras') outraEmpresa.value = '';
+        }
+
+        function getEmpresa() {
+            const empresa = document.getElementById('empresa').value;
+            return empresa === 'Outras' 
+                ? document.getElementById('outraEmpresa').value 
+                : empresa;
+        }
+
+        function gerarDocumento() {
+            const tipoDocumento = document.getElementById('tipoDocumento').value;
+            const empresa = getEmpresa();
+            
+            const dados = {
+                nome: document.getElementById('nomeCompleto').value,
+                cpf: document.getElementById('cpf').value,
+                rg: document.getElementById('rg').value,
+                endereco: document.getElementById('endereco').value,
+                email: document.getElementById('email').value,
+                empresa: empresa
+            };
+
+            let documento = '';
+
+            switch(tipoDocumento) {
+                case 'procuração':
+                    documento = `
+PROCURAÇÃO
+
+${dados.nome}, brasileira, solteira, aeronauta, inscrita no CPF/MF sob o nº. ${dados.cpf}, portadora da cédula de identidade RG nº ${dados.rg}, residente e domiciliada à ${dados.endereco}, endereço de e-mail ${dados.email}, neste ato assistida por SINDICATO NACIONAL DOS AERONAUTAS, portadora do registro sindical nº 00750008214-3, com sede na Rua Renascença, nº 801/112 - Conjuntos 41, 42, 51, 52, 61, 62, 71 e 72, Vila Congonhas, São Paulo – SP, CEP 04612-010, CNPJ/MF n° 33.452.400/0001-97, nomeia e constitui como seus bastantes procuradores os advogados.
+
+OUTORGADA: MARCIA CRISTINA GEMAQUE FURTADO, brasileira, divorciada, advogada, OAB/SP nº 145.072, CPF nº 221.919.332-20 com endereço profissional na Rua Renascença, nº 801/112 - Conjuntos 41, 42, 51, 52, 61, 62, 71 e 72, Vila Congonhas, São Paulo – SP, CEP 04612-010, e eletrônico juridico@aeronautas.org.br.
+
+PODERES: Amplos poderes para o foro em geral, com a cláusula ad judicia, em qualquer Juízo, Instância ou Tribunal, podendo propor contra quem de direito as ações competentes e defendê-los nas contrárias, seguindo umas e outras, até final decisão, utilizando os recursos legais, acompanhando-os, praticando todos os atos do processo; conferindo-lhes, ainda, poderes especiais para confessar, desistir, transigir, desistir, renunciar ao direito sobre o qual se finda a ação, firmar compromissos ou acordos, receber e dar quitação, assinar declaração de hipossuficiência econômica, agindo em conjunto ou separadamente, podendo substabelecer a outrem, com ou sem reservas de iguais poderes, dando tudo por bom, firme e valioso, para o fim de ajuizar ação e envidar quaisquer medidas judiciais em face de ${dados.empresa}
+
+São Paulo, ______ de ______________________ de ${new Date().getFullYear()}.
+
+___________________________________________
+${dados.nome}
+                    `;
+                    break;
+
+                case 'contrato':
+                    documento = `
+CONTRATO AJI
+
+${dados.nome}, brasileiro, solteiro, aeronauta, portador da cédula de identidade n° ${dados.rg}, inscrito no CPF/MF sob o n° ${dados.cpf}, residente e domiciliado à ${dados.endereco}, endereço de e-mail: ${dados.email}, doravante denominado simplesmente CONTRATANTE; 
+
+SINDICATO NACIONAL DOS AERONAUTAS, inscrito no CNPJ/MF sob o n° 33.452.400/0001-97, com escritório regional localizado à Av. Franklin Rosevelt, 194, Salas 802/803 Centro, CEP 20021-120, Rio de Janeiro – RJ, e sede localizada à RUA RENASCENÇA, 801/112 – Congonhas, 04612-010 São Paulo – SP, endereço de e-mail juridico@aeronautas.org.br, doravante denominado simplesmente SNA;
+
+CONTRATANTE e SNA, quando em conjunto considerados como “Partes” e, individualmente, como “Parte”, têm entre si justo e acordado, o presente Contrato de Prestação de Serviços Advocatícios de Natureza Trabalhista, adiante denominado simplesmente “Contrato”, que se regerá pelas seguintes cláusulas e condições:
+
+${Array.from({length: 7}, (_, i) => `CLÁUSULA ${['PRIMEIRA', 'SEGUNDA', 'TERCEIRA', 'QUARTA', 'QUINTA', 'SEXTA', 'SÉTIMA'][i]} – [DESCRIÇÃO DA CLÁUSULA]`).join('\n\n')}
+
+As Partes elegem o Foro Central da Comarca de São Paulo - SP para dirimir todas as questões dele oriundas, com exclusão de qualquer outro, por mais privilegiado que seja.
+
+E, por estarem justas e acordadas, as Partes firmam o presente Instrumento em 2 (duas) vias de igual teor e forma, na presença de 2 (duas) testemunhas, para que produza seus regulares efeitos jurídicos.
+
+São Paulo, ___ de _______________ de ${new Date().getFullYear()}.
+
+___________________________________________
+${dados.nome}
+
+___________________________________________
+Representante do SNA
+                    `;
+                    break;
+
+                case 'declaracao':
+                    documento = `
+DECLARAÇÃO DE HIPOSSUFICIÊNCIA
+
+${dados.nome}, brasileiro, casado, aeronauta, inscrito no CPF/MF sob o nº. ${dados.cpf}, e portador da cédula de identidade RG nº ${dados.rg}, residente e domiciliado à ${dados.endereco}, e endereço eletrônico: ${dados.email}, declaro não ter meios de suportar as despesas processuais decorrentes da presente demanda, sem prejuízo do meu próprio sustento e de minha família. Para fins de concessão do benefício de gratuidade de Justiça, nos termos da Lei 1.060/50, declaro-me pobre, na acepção jurídica do termo.
+
+Por ser verdade, firmo o presente.
+
+São Paulo, ___ de _______________ de ${new Date().getFullYear()}.
+
+___________________________________________
+${dados.nome}
+                    `;
+                    break;
+            }
+
+            document.getElementById('documentoGerado').textContent = documento;
+        }
+    </script>
+</body>
+</html>

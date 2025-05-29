@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Declaração de Hipossuficiência - SNA</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            padding: 20px 0;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .form-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .form-section h2 {
+            color: #1e3c72;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            border-bottom: 3px solid #2a5298;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #2a5298;
+            background: white;
+            box-shadow: 0 0 10px rgba(42, 82, 152, 0.1);
+        }
+
+        .required {
+            color: #e74c3c;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2a5298, #1e3c72);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(42, 82, 152, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+
+        .btn-tertiary {
+            background: linear-gradient(135deg, #e67e22, #f39c12);
+            color: white;
+        }
+
+        .btn-tertiary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4);
+        }
+
+        .preview-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preview-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(135deg, #2a5298, #1e3c72);
+        }
+
+        .preview-section h2 {
+            color: #1e3c72;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+        }
+
+        .document-preview {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 25px;
+            background: #fefefe;
+            font-family: 'Times New Roman', serif;
+            line-height: 1.6;
+            position: relative;
+            min-height: 400px;
+        }
+
+        .sna-logo {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iMzgiIHN0cm9rZT0iIzJhNTI5OCIgc3Ryb2tlLXdpZHRoPSI0Ii8+Cjx0ZXh0IHg9IjQwIiB5PSI0NSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmb250LXdlaWdodD0iYm9sZCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzJhNTI5OCI+U05BPC90ZXh0Pgo8L3N2Zz4K') no-repeat center;
+            background-size: contain;
+            opacity: 0.3;
+        }
+
+        .document-title {
+            text-align: center;
+            font-size: 1.4rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 25px;
+            color: #1e3c72;
+        }
+
+        .document-content {
+            font-size: 1rem;
+            text-align: justify;
+            margin-bottom: 20px;
+        }
+
+        .signature-section {
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .signature-line {
+            border-bottom: 2px solid #333;
+            width: 300px;
+            margin: 20px auto;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c62828;
+            display: none;
+        }
+
+        .success-message {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2e7d32;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .buttons {
+                justify-content: center;
+            }
+            
+            .btn {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #2a5298;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🛩️ Sindicato Nacional dos Aeronautas</h1>
+            <p>Gerador de Declaração de Hipossuficiência</p>
+        </div>
+
+        <div class="main-content">
+            <div class="form-section">
+                <h2>📝 Dados Pessoais</h2>
+                
+                <div class="error-message" id="errorMessage"></div>
+                <div class="success-message" id="successMessage"></div>
+
+                <form id="declarationForm">
+                    <div class="form-group">
+                        <label for="nome">Nome Completo <span class="required">*</span></label>
+                        <input type="text" id="nome" name="nome" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cpf">CPF <span class="required">*</span></label>
+                        <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="rg">RG <span class="required">*</span></label>
+                        <input type="text" id="rg" name="rg" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">E-mail <span class="required">*</span></label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="endereco">Endereço Completo <span class="required">*</span></label>
+                        <textarea id="endereco" name="endereco" rows="3" placeholder="Rua, número, bairro, cidade - Estado, CEP" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cep">CEP <span class="required">*</span></label>
+                        <input type="text" id="cep" name="cep" placeholder="00000-000" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="data">Data <span class="required">*</span></label>
+                        <input type="date" id="data" name="data" required>
+                    </div>
+
+                    <div class="buttons">
+                        <button type="button" class="btn btn-primary" onclick="generatePreview()">
+                            📄 Gerar Preview
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="downloadPDF()">
+                            📑 Baixar PDF
+                        </button>
+                        <button type="button" class="btn btn-tertiary" onclick="downloadWord()">
+                            📝 Baixar Word
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="preview-section">
+                <h2>👁️ Visualização</h2>
+                <div class="document-preview" id="documentPreview">
+                    <div class="sna-logo"></div>
+                    <div class="document-title">DECLARAÇÃO DE HIPOSSUFICIÊNCIA</div>
+                    <div class="document-content" id="documentContent">
+                        <p><em>Preencha o formulário ao lado para gerar a declaração</em></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Máscaras para CPF e CEP
+        document.getElementById('cpf').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            e.target.value = value;
+        });
+
+        document.getElementById('cep').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            value = value.replace(/(\d{5})(\d)/, '$1-$2');
+            e.target.value = value;
+        });
+
+        // Definir data atual por padrão
+        document.getElementById('data').valueAsDate = new Date();
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        function validateForm() {
+            const requiredFields = ['nome', 'cpf', 'rg', 'email', 'endereco', 'cep', 'data'];
+            
+            for (let field of requiredFields) {
+                const value = document.getElementById(field).value.trim();
+                if (!value) {
+                    showError(`Por favor, preencha o campo ${field.toUpperCase()}`);
+                    return false;
+                }
+            }
+
+            // Validar email
+            const email = document.getElementById('email').value;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showError('Por favor, insira um e-mail válido');
+                return false;
+            }
+
+            return true;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const day = date.getDate();
+            const months = [
+                'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+                'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+            ];
+            const month = months[date.getMonth()];
+            const year = date.getFullYear();
+            
+            return `${day} de ${month} de ${year}`;
+        }
+
+        function generatePreview() {
+            if (!validateForm()) return;
+
+            const nome = document.getElementById('nome').value;
+            const cpf = document.getElementById('cpf').value;
+            const rg = document.getElementById('rg').value;
+            const email = document.getElementById('email').value;
+            const endereco = document.getElementById('endereco').value;
+            const cep = document.getElementById('cep').value;
+            const data = formatDate(document.getElementById('data').value);
+
+            const content = `
+                <p><strong>${nome}</strong>, brasileiro, casado, aeronauta, inscrito no CPF/MF sob o nº. <strong>${cpf}</strong>, e portador da cédula de identidade RG nº <strong>${rg}</strong>, residente e domiciliado à <strong>${endereco}</strong>, CEP: <strong>${cep}</strong>, e endereço eletrônico: <u>${email}</u>, declaro não ter meios de suportar as despesas processuais decorrentes da presente demanda, sem prejuízo do meu próprio sustento e de minha família.</p>
+                
+                <p>Para fins de concessão do benefício de gratuidade de Justiça, nos termos da Lei 1.060/50, declaro-me pobre, na acepção jurídica do termo.</p>
+                
+                <p>Por ser verdade, firmo o presente.</p>
+                
+                <p style="margin-top: 30px;">São Paulo, ${data}.</p>
+                
+                <div class="signature-section">
+                    <div class="signature-line"></div>
+                    <p><strong>${nome}</strong></p>
+                    <p>CPF: ${cpf}</p>
+                </div>
+            `;
+
+            document.getElementById('documentContent').innerHTML = content;
+            showSuccess('Declaração gerada com sucesso!');
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        async function downloadPDF() {
+            if (!validateForm()) return;
+            
+            generatePreview();
+            showLoading();
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Adicionar conteúdo
+                const nome = document.getElementById('nome').value;
+                const cpf = document.getElementById('cpf').value;
+                const rg = document.getElementById('rg').value;
+                const email = document.getElementById('email').value;
+                const endereco = document.getElementById('endereco').value;
+                const cep = document.getElementById('cep').value;
+                const data = formatDate(document.getElementById('data').value);
+
+                // Configurar fonte
+                doc.setFont('helvetica');
+                
+                // Título
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'bold');
+                doc.text('DECLARAÇÃO DE HIPOSSUFICIÊNCIA', 105, 30, { align: 'center' });
+                
+                // Corpo do texto
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'normal');
+                
+                const text = `${nome}, brasileiro, casado, aeronauta, inscrito no CPF/MF sob o nº. ${cpf}, e portador da cédula de identidade RG nº ${rg}, residente e domiciliado à ${endereco}, CEP: ${cep}, e endereço eletrônico: ${email}, declaro não ter meios de suportar as despesas processuais decorrentes da presente demanda, sem prejuízo do meu próprio sustento e de minha família.
+
+Para fins de concessão do benefício de gratuidade de Justiça, nos termos da Lei 1.060/50, declaro-me pobre, na acepção jurídica do termo.
+
+Por ser verdade, firmo o presente.
+
+São Paulo, ${data}.
+
+
+
+_____________________________________
+${nome}
+CPF: ${cpf}`;
+
+                const splitText = doc.splitTextToSize(text, 180);
+                doc.text(splitText, 15, 50);
+                
+                doc.save(`Declaracao_Hipossuficiencia_${nome.replace(/\s+/g, '_')}.pdf`);
+                showSuccess('PDF baixado com sucesso!');
+            } catch (error) {
+                showError('Erro ao gerar PDF: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function downloadWord() {
+            if (!validateForm()) return;
+            
+            generatePreview();
+            showLoading();
+
+            try {
+                const nome = document.getElementById('nome').value;
+                const cpf = document.getElementById('cpf').value;
+                const rg = document.getElementById('rg').value;
+                const email = document.getElementById('email').value;
+                const endereco = document.getElementById('endereco').value;
+                const cep = document.getElementById('cep').value;
+                const data = formatDate(document.getElementById('data').value);
+
+                const content = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Declaração de Hipossuficiência</title>
+</head>
+<body style="font-family: Times New Roman, serif; line-height: 1.6; margin: 40px;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="font-size: 18px; text-transform: uppercase;">DECLARAÇÃO DE HIPOSSUFICIÊNCIA</h1>
+    </div>
+    
+    <div style="text-align: justify; margin-bottom: 20px;">
+        <p><strong>${nome}</strong>, brasileiro, casado, aeronauta, inscrito no CPF/MF sob o nº. <strong>${cpf}</strong>, e portador da cédula de identidade RG nº <strong>${rg}</strong>, residente e domiciliado à <strong>${endereco}</strong>, CEP: <strong>${cep}</strong>, e endereço eletrônico: <u>${email}</u>, declaro não ter meios de suportar as despesas processuais decorrentes da presente demanda, sem prejuízo do meu próprio sustento e de minha família.</p>
+        
+        <p>Para fins de concessão do benefício de gratuidade de Justiça, nos termos da Lei 1.060/50, declaro-me pobre, na acepção jurídica do termo.</p>
+        
+        <p>Por ser verdade, firmo o presente.</p>
+        
+        <p style="margin-top: 40px;">São Paulo, ${data}.</p>
+    </div>
+    
+    <div style="text-align: center; margin-top: 60px;">
+        <div style="border-bottom: 2px solid black; width: 300px; margin: 0 auto 20px;"></div>
+        <p><strong>${nome}</strong></p>
+        <p>CPF: ${cpf}</p>
+    </div>
+</body>
+</html>`;
+
+                const blob = new Blob([content], { type: 'application/msword' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Declaracao_Hipossuficiencia_${nome.replace(/\s+/g, '_')}.doc`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showSuccess('Documento Word baixado com sucesso!');
+            } catch (error) {
+                showError('Erro ao gerar documento Word: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+    </script>
+</body>
+</html>

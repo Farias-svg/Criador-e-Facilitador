@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SNA - Gerador de Declaração de Hipossuficiência</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .sna-logo {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .form-section {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        input[type="text"], input[type="email"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus, input[type="email"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .required {
+            color: #e74c3c;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-preview {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-pdf {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .btn-word {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .preview-section {
+            margin-top: 40px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .preview-content {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            font-family: 'Times New Roman', serif;
+            line-height: 1.6;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .preview-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+
+        .signature-line {
+            border-bottom: 1px solid #333;
+            width: 300px;
+            margin: 30px auto;
+            text-align: center;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="sna-logo">SNA</div>
+            <div class="subtitle">Gerador de Declaração de Hipossuficiência</div>
+        </div>
+
+        <div class="form-section">
+            <form id="declaracaoForm">
+                <div class="form-group">
+                    <label for="nome">Nome Completo <span class="required">*</span></label>
+                    <input type="text" id="nome" name="nome" required>
+                    <div class="error-message" id="erro-nome">Campo obrigatório</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="cpf">CPF <span class="required">*</span></label>
+                    <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00" required>
+                    <div class="error-message" id="erro-cpf">Campo obrigatório</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="rg">RG <span class="required">*</span></label>
+                    <input type="text" id="rg" name="rg" required>
+                    <div class="error-message" id="erro-rg">Campo obrigatório</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">E-mail <span class="required">*</span></label>
+                    <input type="email" id="email" name="email" required>
+                    <div class="error-message" id="erro-email">Campo obrigatório</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="endereco">Endereço Completo <span class="required">*</span></label>
+                    <input type="text" id="endereco" name="endereco" placeholder="Rua, número, bairro, cidade, CEP" required>
+                    <div class="error-message" id="erro-endereco">Campo obrigatório</div>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="btn btn-preview" onclick="visualizarDeclaracao()">👁️ Visualizar</button>
+                    <button type="button" class="btn btn-pdf" onclick="baixarPDF()">📄 Baixar PDF</button>
+                    <button type="button" class="btn btn-word" onclick="baixarWord()">📝 Baixar WORD</button>
+                </div>
+            </form>
+
+            <div class="preview-section" id="previewSection">
+                <h3 style="text-align: center; margin-bottom: 20px; color: #667eea;">Prévia da Declaração</h3>
+                <div class="preview-content" id="previewContent">
+                    <!-- Conteúdo será inserido aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Formatação do CPF
+        document.getElementById('cpf').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            e.target.value = value;
+        });
+
+        function validarCampos() {
+            const campos = ['nome', 'cpf', 'rg', 'email', 'endereco'];
+            let todosPreenchidos = true;
+
+            campos.forEach(campo => {
+                const input = document.getElementById(campo);
+                const erro = document.getElementById(`erro-${campo}`);
+                
+                if (!input.value.trim()) {
+                    erro.style.display = 'block';
+                    input.style.borderColor = '#e74c3c';
+                    todosPreenchidos = false;
+                } else {
+                    erro.style.display = 'none';
+                    input.style.borderColor = '#e1e5e9';
+                }
+            });
+
+            return todosPreenchidos;
+        }
+
+        function gerarDeclaracao() {
+            const dados = {
+                nome: document.getElementById('nome').value.toUpperCase(),
+                cpf: document.getElementById('cpf').value,
+                rg: document.getElementById('rg').value,
+                email: document.getElementById('email').value,
+                endereco: document.getElementById('endereco').value
+            };
+
+            const hoje = new Date();
+            const dia = hoje.getDate();
+            const meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 
+                          'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+            const mes = meses[hoje.getMonth()];
+
+            return `
+                <div class="preview-title">DECLARAÇÃO DE HIPOSSUFICIÊNCIA</div>
+                
+                <p><strong>${dados.nome},</strong> brasileiro, casado, aeronauta, inscrito no CPF/MF sob o nº. <strong>${dados.cpf}</strong>, e portador da cédula de identidade RG nº <strong>${dados.rg}</strong>, residente e domiciliado à <strong>${dados.endereco}</strong>, e endereço eletrônico: <u>${dados.email}</u>, declaro não ter meios de suportar as despesas processuais decorrentes da presente demanda, sem prejuízo do meu próprio sustento e de minha família. Para fins de concessão do benefício de gratuidade de Justiça, nos termos da Lei 1.060/50, declaro-me pobre, na acepção jurídica do termo.</p>
+                
+                <p>Por ser verdade, firmo o presente.</p>
+                
+                <p>São Paulo, ${dia} de ${mes} de 2025.</p>
+                
+                <div class="signature-line"></div>
+                <div style="text-align: center; margin-top: 10px;">
+                    <strong>${dados.nome}</strong><br>
+                    CPF: ${dados.cpf}
+                </div>
+            `;
+        }
+
+        function visualizarDeclaracao() {
+            if (!validarCampos()) {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+                return;
+            }
+
+            const conteudo = gerarDeclaracao();
+            document.getElementById('previewContent').innerHTML = conteudo;
+            document.getElementById('previewSection').style.display = 'block';
+            
+            // Scroll para a prévia
+            document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function baixarPDF() {
+            if (!validarCampos()) {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+                return;
+            }
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                const dados = {
+                    nome: document.getElementById('nome').value.toUpperCase(),
+                    cpf: document.getElementById('cpf').value,
+                    rg: document.getElementById('rg').value,
+                    email: document.getElementById('email').value,
+                    endereco: document.getElementById('endereco').value
+                };
+
+                const hoje = new Date();
+                const dia = hoje.getDate();
+                const meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 
+                              'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+                const mes = meses[hoje.getMonth()];
+
+                // Título
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'bold');
+                doc.text('DECLARAÇÃO DE HIPOSSUFICIÊNCIA', doc.internal.pageSize.getWidth() / 2, 30, { align: 'center' });
+                
+                // Corpo do texto
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'normal');
+                
+                const texto = `${dados.nome}, brasileiro, casado, aeronauta, inscrito no CPF/MF sob o nº. ${dados.cpf}, e portador da cédula de identidade RG nº ${dados.rg}, residente e domiciliado à ${dados.endereco}, e endereço eletrônico: ${dados.email}, declaro não ter meios de suportar as despesas processuais decorrentes da presente demanda, sem prejuízo do meu próprio sustento e de minha família. Para fins de concessão do benefício de gratuidade de Justiça, nos termos da Lei 1.060/50, declaro-me pobre, na acepção jurídica do termo.`;
+                
+                const linhas = doc.splitTextToSize(texto, 180);
+                doc.text(linhas, 15, 50);
+                
+                const yPos = 50 + (linhas.length * 6);
+                
+                doc.text('Por ser verdade, firmo o presente.', 15, yPos + 20);
+                doc.text(`São Paulo, ${dia} de ${mes} de 2025.`, 15, yPos + 40);
+                
+                // Linha de assinatura
+                doc.line(60, yPos + 80, 150, yPos + 80);
+                doc.setFont('helvetica', 'bold');
+                doc.text(dados.nome, doc.internal.pageSize.getWidth() / 2, yPos + 90, { align: 'center' });
+                doc.setFont('helvetica', 'normal');
+                doc.text(`CPF: ${dados.cpf}`, doc.internal.pageSize.getWidth() / 2, yPos + 100, { align: 'center' });
+                
+                doc.save('declaracao_hipossuficiencia.pdf');
+                
+            } catch (error) {
+                console.error('Erro ao gerar PDF:', error);
+                alert('Erro ao gerar o PDF. Tente novamente.');
+            }
+        }
+
+        function baixarWord() {
+            if (!validarCampos()) {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+                return;
+            }
+
+            const dados = {
+                nome: document.getElementById('nome').value.toUpperCase(),
+                cpf: document.getElementById('cpf').value,
+                rg: document.getElementById('rg').value,
+                email: document.getElementById('email').value,
+                endereco: document.getElementById('endereco').value
+            };
+
+            const hoje = new Date();
+            const dia = hoje.getDate();
+            const meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 
+                          'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+            const mes = meses[hoje.getMonth()];
+
+            // Criar conteúdo HTML para conversão
+            const conteudoHTML = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+                        .titulo { text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 30px; }
+                        .assinatura { text-align: center; margin-top: 60px; }
+                        .linha-assinatura { border-bottom: 1px solid black; width: 300px; margin: 20px auto; }
+                    </style>
+                </head>
+                <body>
+                    <div class="titulo">DECLARAÇÃO DE HIPOSSUFICIÊNCIA</div>
+                    
+                    <p><strong>${dados.nome},</strong> brasileiro, casado, aeronauta, inscrito no CPF/MF sob o nº. <strong>${dados.cpf}</strong>, e portador da cédula de identidade RG nº <strong>${dados.rg}</strong>, residente e domiciliado à <strong>${dados.endereco}</strong>, e endereço eletrônico: <u>${dados.email}</u>, declaro não ter meios de suportar as despesas processuais decorrentes da presente demanda, sem prejuízo do meu próprio sustento e de minha família. Para fins de concessão do benefício de gratuidade de Justiça, nos termos da Lei 1.060/50, declaro-me pobre, na acepção jurídica do termo.</p>
+                    
+                    <p>Por ser verdade, firmo o presente.</p>
+                    
+                    <p>São Paulo, ${dia} de ${mes} de 2025.</p>
+                    
+                    <div class="assinatura">
+                        <div class="linha-assinatura"></div>
+                        <strong>${dados.nome}</strong><br>
+                        CPF: ${dados.cpf}
+                    </div>
+                </body>
+                </html>
+            `;
+
+            // Criar blob e fazer download
+            const blob = new Blob([conteudoHTML], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'declaracao_hipossuficiencia.doc';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
